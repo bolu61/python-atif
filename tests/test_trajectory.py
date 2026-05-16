@@ -94,11 +94,30 @@ def test_canonical_example_parses_and_round_trips():
     assert len(trajectory.steps) == 3
     assert trajectory.steps[1].tool_calls is not None
     assert trajectory.steps[1].tool_calls[0].function_name == "financial_search"
+    # walks both message and observation-result content paths without finding any
+    assert trajectory.has_multimodal_content() is False
 
     dumped = trajectory.to_json_dict(exclude_none=True)
     assert "session_id" in dumped
     # round-trip must re-validate
     assert Trajectory.model_validate(dumped) == trajectory
+
+
+def test_llm_call_count_zero_minimal_agent_step_is_valid():
+    step = Step.model_validate(
+        {
+            "step_id": 1,
+            "source": "agent",
+            "message": "deterministic dispatch",
+            "llm_call_count": 0,
+            "tool_calls": [
+                {"tool_call_id": "c1", "function_name": "noop", "arguments": {}}
+            ],
+        }
+    )
+    assert step.llm_call_count == 0
+    assert step.metrics is None
+    assert step.reasoning_content is None
 
 
 def test_step_id_must_be_sequential():
@@ -251,3 +270,130 @@ def test_unknown_fields_rejected():
                 "made_up_field": True,
             }
         )
+
+
+def test_step_without_timestamp_is_valid():
+    step = Step(step_id=1, source="user", message="hi", timestamp=None)
+    assert step.timestamp is None
+
+
+def test_llm_call_count_zero_forbids_reasoning_content():
+    with pytest.raises(ValidationError, match="`reasoning_content` MUST be absent"):
+        Step.model_validate(
+            {
+                "step_id": 1,
+                "source": "agent",
+                "message": "dispatch",
+                "llm_call_count": 0,
+                "reasoning_content": "should not be here",
+            }
+        )
+
+
+def test_trajectory_with_valid_subagents_round_trips():
+    trajectory = Trajectory.model_validate(
+        {
+            "schema_version": "ATIF-v1.7",
+            "agent": {"name": "parent", "version": "1"},
+            "steps": [{"step_id": 1, "source": "user", "message": "delegate"}],
+            "subagent_trajectories": [
+                {
+                    "schema_version": "ATIF-v1.7",
+                    "trajectory_id": "sub-a",
+                    "agent": {"name": "child-a", "version": "1"},
+                    "steps": [{"step_id": 1, "source": "user", "message": "a"}],
+                },
+                {
+                    "schema_version": "ATIF-v1.7",
+                    "trajectory_id": "sub-b",
+                    "agent": {"name": "child-b", "version": "1"},
+                    "steps": [{"step_id": 1, "source": "user", "message": "b"}],
+                },
+            ],
+        }
+    )
+    assert trajectory.subagent_trajectories is not None
+    assert [s.trajectory_id for s in trajectory.subagent_trajectories] == ["sub-a", "sub-b"]
+
+
+def test_has_multimodal_content_via_observation():
+    trajectory = Trajectory.model_validate(
+        {
+            "schema_version": "ATIF-v1.7",
+            "agent": {"name": "a", "version": "1"},
+            "steps": [
+                {
+                    "step_id": 1,
+                    "source": "agent",
+                    "message": "screenshot saved",
+                    "tool_calls": [
+                        {"tool_call_id": "c1", "function_name": "screenshot", "arguments": {}}
+                    ],
+                    "observation": {
+                        "results": [
+                            {
+                                "source_call_id": "c1",
+                                "content": [
+                                    {
+                                        "type": "image",
+                                        "source": {"media_type": "image/png", "path": "x.png"},
+                                    }
+                                ],
+                            }
+                        ]
+                    },
+                }
+            ],
+        }
+    )
+    assert trajectory.has_multimodal_content() is True
+
+
+def test_has_multimodal_content_recurses_into_subagents():
+    trajectory = Trajectory.model_validate(
+        {
+            "schema_version": "ATIF-v1.7",
+            "agent": {"name": "parent", "version": "1"},
+            "steps": [{"step_id": 1, "source": "user", "message": "no image here"}],
+            "subagent_trajectories": [
+                {
+                    "schema_version": "ATIF-v1.7",
+                    "trajectory_id": "sub",
+                    "agent": {"name": "child", "version": "1"},
+                    "steps": [
+                        {
+                            "step_id": 1,
+                            "source": "user",
+                            "message": [
+                                {"type": "text", "text": "look"},
+                                {
+                                    "type": "image",
+                                    "source": {"media_type": "image/png", "path": "x.png"},
+                                },
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+    assert trajectory.has_multimodal_content() is True
+
+
+def test_has_multimodal_content_returns_false_when_text_only():
+    trajectory = Trajectory.model_validate(
+        {
+            "schema_version": "ATIF-v1.7",
+            "agent": {"name": "a", "version": "1"},
+            "steps": [{"step_id": 1, "source": "user", "message": "plain text"}],
+            "subagent_trajectories": [
+                {
+                    "schema_version": "ATIF-v1.7",
+                    "trajectory_id": "sub",
+                    "agent": {"name": "b", "version": "1"},
+                    "steps": [{"step_id": 1, "source": "user", "message": "also plain"}],
+                }
+            ],
+        }
+    )
+    assert trajectory.has_multimodal_content() is False
