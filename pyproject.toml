@@ -1,6 +1,6 @@
 [project]
 name = "python-atif"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Pydantic models for the Agent Trajectory Interchange Format (ATIF v1.7)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -35,8 +35,14 @@ Issues = "https://github.com/bolu61/python-atif/issues"
 Specification = "https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "atif/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["atif"]

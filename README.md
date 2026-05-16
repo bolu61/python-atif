@@ -46,4 +46,13 @@ agent-only fields gated on `source == "agent"`, tool-call / observation
 correlation, embedded-subagent `trajectory_id` uniqueness, and
 `ContentPart` text/image XOR.
 
+## Versioning
+
+`python-atif`'s `MAJOR.MINOR` tracks the ATIF RFC version it implements
+(`1.7.x` ⇔ ATIF v1.7); `PATCH` is reserved for library-only fixes. Because
+the ATIF RFC occasionally introduces breaking changes on a MINOR bump
+(e.g. v1.7's `SubagentTrajectoryRef` resolution change), a MINOR bump of
+this library may be breaking too — pin to `python-atif~=1.7.0` if you
+need to stay on a single ATIF version.
+
 [spec]: https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md
