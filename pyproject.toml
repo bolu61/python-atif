@@ -1,5 +1,5 @@
 [project]
-name = "python-atif"
+name = "atif"
 dynamic = ["version"]
 description = "Pydantic models for the Agent Trajectory Interchange Format (ATIF v1.7)."
 readme = "README.md"

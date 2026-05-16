@@ -1,4 +1,4 @@
-# python-atif
+# atif
 
 Pydantic models for the [Agent Trajectory Interchange Format (ATIF)][spec], a
 standardized JSON schema for logging the complete interaction history of
@@ -8,7 +8,7 @@ metrics, and embedded subagent trajectories. Implements ATIF v1.7.
 ## Install
 
 ```bash
-pip install python-atif
+pip install atif
 ```
 
 ## Usage
@@ -48,11 +48,11 @@ correlation, embedded-subagent `trajectory_id` uniqueness, and
 
 ## Versioning
 
-`python-atif`'s `MAJOR.MINOR` tracks the ATIF RFC version it implements
+`atif`'s `MAJOR.MINOR` tracks the ATIF RFC version it implements
 (`1.7.x` ⇔ ATIF v1.7); `PATCH` is reserved for library-only fixes. Because
 the ATIF RFC occasionally introduces breaking changes on a MINOR bump
 (e.g. v1.7's `SubagentTrajectoryRef` resolution change), a MINOR bump of
-this library may be breaking too — pin to `python-atif~=1.7.0` if you
-need to stay on a single ATIF version.
+this library may be breaking too — pin to `atif~=1.7.0` if you need to
+stay on a single ATIF version.
 
 [spec]: https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md
