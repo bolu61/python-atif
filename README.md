@@ -1,9 +1,14 @@
+![PyPI - Version](https://img.shields.io/pypi/v/atif)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/atif)
+
+
 # atif
 
 Pydantic models for the [Agent Trajectory Interchange Format (ATIF)][spec], a
 standardized JSON schema for logging the complete interaction history of
 autonomous LLM agents (user messages, agent responses, tool calls, observations,
 metrics, and embedded subagent trajectories). Implements ATIF v1.7.
+This project is independent and not an official implemention.
 
 ## Install
 
