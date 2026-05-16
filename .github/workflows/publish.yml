@@ -17,7 +17,13 @@ name: Publish to PyPI
 
 on:
   release:
-    types: [published]
+    types: [published, prereleased]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or commit to build and publish (e.g. v1.7.0-alpha)."
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -31,6 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.ref || github.ref }}
           fetch-depth: 0  # hatch-vcs needs the tag, not just the commit
 
       - uses: astral-sh/setup-uv@v3
