@@ -55,4 +55,10 @@ the ATIF RFC occasionally introduces breaking changes on a MINOR bump
 this library may be breaking too — pin to `atif~=1.7.0` if you need to
 stay on a single ATIF version.
 
+## AI disclosure
+
+Parts of this project, including code, tests, and documentation, were
+written with the assistance of AI tooling. Readers should be aware that
+AI was involved in its production.
+
 [spec]: https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md
