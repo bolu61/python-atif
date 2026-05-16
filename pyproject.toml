@@ -60,7 +60,6 @@ addopts = ["--cov=atif", "--cov-report=term-missing"]
 [tool.coverage.run]
 source = ["atif"]
 branch = true
-omit = ["atif/_version.py"]
 
 [tool.coverage.report]
 show_missing = true
