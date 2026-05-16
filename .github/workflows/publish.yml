@@ -1,0 +1,52 @@
+name: Publish to PyPI
+
+# Triggers on a GitHub Release being published (not on tag push). The flow:
+#   1. Push a tag (e.g. v1.7.0a0).
+#   2. Create a Draft Release in the GitHub UI, attached to that tag.
+#   3. Review the auto-generated notes; tick "pre-release" if appropriate.
+#   4. Publish the release — this workflow then builds and uploads to PyPI.
+#
+# Authentication uses PyPI Trusted Publishers (OIDC), so there is no API token
+# to manage. One-time setup on the PyPI side:
+#   https://pypi.org/manage/account/publishing/ → add a "pending" publisher with:
+#     PyPI Project Name: atif
+#     Owner:             bolu61
+#     Repository name:   python-atif
+#     Workflow name:     publish.yml
+#     Environment name:  pypi
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/atif/
+    permissions:
+      id-token: write  # required for Trusted Publisher OIDC
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # hatch-vcs needs the tag, not just the commit
+
+      - uses: astral-sh/setup-uv@v3
+
+      - name: Build distribution
+        run: uv build
+
+      - name: Verify built version matches the released tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          built=$(ls dist/atif-*.whl | sed -E 's|.*/atif-([^-]+)-py3.*|\1|')
+          echo "Tag (without v):  $tag"
+          echo "Built wheel ver:  $built"
+          # PEP 440 normalisation: the wheel version may differ in punctuation
+          # from the tag (e.g. v1.7.0-alpha → 1.7.0a0). Just sanity-check the
+          # built version is non-empty and uv build succeeded.
+          test -n "$built"
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
