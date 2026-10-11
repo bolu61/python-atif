@@ -1,10 +1,17 @@
-"""Pydantic models for the Agent Trajectory Interchange Format (ATIF v1.7).
+"""Pydantic models for the Agent Trajectory Interchange Format (ATIF v1.8).
 
 Reference: https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md
 """
 
 from .agent import Agent
-from .content import ContentPart, ContentPartType, ImageMediaType, ImageSource
+from .content import (
+    AudioMediaType,
+    AudioSource,
+    ContentPart,
+    ContentPartType,
+    ImageMediaType,
+    ImageSource,
+)
 from .final_metrics import FinalMetrics
 from .metrics import Metrics
 from .observation import Observation
@@ -16,6 +23,8 @@ from .trajectory import Trajectory
 
 __all__ = [
     "Agent",
+    "AudioMediaType",
+    "AudioSource",
     "ContentPart",
     "ContentPartType",
     "FinalMetrics",

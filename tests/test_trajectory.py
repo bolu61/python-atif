@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from atif import (
     Agent,
+    AudioSource,
     ContentPart,
     ImageSource,
     Step,
@@ -397,3 +398,95 @@ def test_has_multimodal_content_returns_false_when_text_only():
         }
     )
     assert trajectory.has_multimodal_content() is False
+
+
+def test_content_part_audio_parses_from_rfc_example():
+    part = ContentPart.model_validate(
+        {
+            "type": "audio",
+            "source": {
+                "media_type": "audio/wav",
+                "path": "audio/step_1_question.wav",
+                "duration_sec": 3.2,
+            },
+        }
+    )
+    assert isinstance(part.source, AudioSource)
+    assert part.source.duration_sec == 3.2
+
+
+def test_content_part_audio_text_xor():
+    source = AudioSource(media_type="audio/wav", path="x")
+    with pytest.raises(ValidationError, match="must omit `text`"):
+        ContentPart(type="audio", text="hi", source=source)
+    with pytest.raises(ValidationError, match="requires `source`"):
+        ContentPart(type="audio")
+    with pytest.raises(ValidationError, match="must omit `source`"):
+        ContentPart(type="text", text="hi", source=source)
+
+
+def test_content_part_source_kind_must_match_type():
+    with pytest.raises(ValidationError, match="requires an `AudioSource`"):
+        ContentPart.model_validate(
+            {"type": "audio", "source": {"media_type": "image/png", "path": "x"}}
+        )
+    with pytest.raises(ValidationError, match="requires an `ImageSource`"):
+        ContentPart.model_validate(
+            {"type": "image", "source": {"media_type": "audio/wav", "path": "x"}}
+        )
+
+
+@pytest.mark.parametrize(
+    ("written", "canonical"),
+    [
+        ("audio/mp3", "audio/mpeg"),
+        ("audio/mpga", "audio/mpeg"),
+        ("audio/x-mpeg", "audio/mpeg"),
+        ("audio/x-wav", "audio/wav"),
+        ("audio/wave", "audio/wav"),
+        ("audio/vnd.wave", "audio/wav"),
+        ("audio/x-m4a", "audio/mp4"),
+        ("audio/m4a", "audio/mp4"),
+        ("audio/x-aac", "audio/aac"),
+        ("audio/x-flac", "audio/flac"),
+        ("audio/x-aiff", "audio/aiff"),
+        ("Audio/OGG", "audio/ogg"),
+    ],
+)
+def test_audio_media_type_aliases_normalize(written: str, canonical: str):
+    assert AudioSource(media_type=written, path="x").media_type == canonical
+
+
+def test_audio_source_rejects_unknown_media_type_and_negative_duration():
+    with pytest.raises(ValidationError):
+        AudioSource(media_type="audio/pcm", path="x")
+    with pytest.raises(ValidationError):
+        AudioSource(media_type="audio/wav", path="x", duration_sec=-1)
+
+
+def test_has_multimodal_content_with_audio():
+    trajectory = Trajectory.model_validate(
+        {
+            "schema_version": "ATIF-v1.8",
+            "agent": {"name": "a", "version": "1"},
+            "steps": [
+                {
+                    "step_id": 1,
+                    "source": "user",
+                    "message": [
+                        {"type": "text", "text": "Answer the question in the recording."},
+                        {
+                            "type": "audio",
+                            "source": {"media_type": "audio/mp3", "path": "audio/q.mp3"},
+                        },
+                    ],
+                }
+            ],
+        }
+    )
+    assert trajectory.has_multimodal_content()
+    dumped = trajectory.to_json_dict()
+    assert dumped["steps"][0]["message"][1]["source"] == {
+        "media_type": "audio/mpeg",
+        "path": "audio/q.mp3",
+    }

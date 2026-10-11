@@ -21,7 +21,7 @@ class Trajectory(BaseModel):
 
     schema_version: str = Field(
         ...,
-        description="ATIF compatibility tag, e.g. 'ATIF-v1.7'.",
+        description="ATIF compatibility tag, e.g. 'ATIF-v1.8'.",
     )
     session_id: str | None = Field(
         default=None,

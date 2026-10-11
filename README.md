@@ -7,7 +7,7 @@
 Pydantic models for the [Agent Trajectory Interchange Format (ATIF)][spec], a
 standardized JSON schema for logging the complete interaction history of
 autonomous LLM agents (user messages, agent responses, tool calls, observations,
-metrics, and embedded subagent trajectories). Implements ATIF v1.7.
+metrics, and embedded subagent trajectories). Implements ATIF v1.8.
 This project is independent and **not an official implemention**.
 
 ## Install
@@ -22,7 +22,7 @@ pip install atif
 from atif import Trajectory
 
 data = {
-    "schema_version": "ATIF-v1.7",
+    "schema_version": "ATIF-v1.8",
     "agent": {"name": "my-agent", "version": "1.0.0", "model_name": "claude-sonnet-4-6"},
     "steps": [
         {"step_id": 1, "source": "user", "message": "What time is it?"},
@@ -49,12 +49,12 @@ print(trajectory.to_json_dict(exclude_none=True))
 Validation enforces the ATIF rules: sequential `step_id`s, ISO 8601 timestamps,
 agent-only fields gated on `source == "agent"`, tool-call, observation
 correlation, embedded-subagent `trajectory_id` uniqueness, and
-`ContentPart` text/image XOR.
+`ContentPart` text/source XOR with the source kind matching `type`.
 
 ## Versioning
 
 `atif`'s `MAJOR.MINOR` tracks the ATIF RFC version it implements
-(`1.7.x` ⇔ ATIF v1.7); `PATCH` is reserved for library-only fixes.
+(`1.8.x` ⇔ ATIF v1.8); `PATCH` is reserved for library-only fixes.
 
 ## AI disclosure
 
